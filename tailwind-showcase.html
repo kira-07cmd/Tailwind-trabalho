@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tailwind CSS — Showcase Interativo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet"/>
+  <style>
+    /* ─── CSS Variables & Base ─── */
+    :root {
+      --teal: #2dd4bf;
+      --teal-dark: #0d9488;
+      --cyan: #22d3ee;
+      --navy: #0a0f1e;
+      --navy-mid: #111827;
+      --navy-card: #1a2235;
+      --navy-border: #1e2d45;
+      --text-dim: #94a3b8;
+      --text-bright: #e2e8f0;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--navy);
+      color: var(--text-bright);
+      overflow-x: hidden;
+    }
+
+    /* ─── Scrollbar ─── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--navy); }
+    ::-webkit-scrollbar-thumb { background: var(--teal-dark); border-radius: 3px; }
+
+    /* ─── Code font ─── */
+    code, pre, .mono { font-family: 'Space Mono', monospace; }
+
+    /* ─── Noise texture overlay ─── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      opacity: 0.4;
+    }
+
+    /* ─── Gradient blobs ─── */
+    .blob {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.12;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .blob-1 { width: 600px; height: 600px; background: var(--teal); top: -200px; left: -200px; }
+    .blob-2 { width: 500px; height: 500px; background: var(--cyan); bottom: 20%; right: -150px; }
+    .blob-3 { width: 400px; height: 400px; background: #6366f1; bottom: -100px; left: 30%; }
+
+    /* ─── Layout wrappers ─── */
+    main { position: relative; z-index: 1; }
+
+    .container-xl { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; }
+
+    /* ─── Navbar ─── */
+    #navbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      backdrop-filter: blur(20px);
+      background: rgba(10,15,30,0.85);
+      border-bottom: 1px solid var(--navy-border);
+      transition: box-shadow 0.3s;
+    }
+    #navbar.scrolled { box-shadow: 0 4px 30px rgba(0,0,0,0.4); }
+
+    .nav-link {
+      color: var(--text-dim);
+      font-size: 0.875rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      text-decoration: none;
+      padding: 0.25rem 0;
+      position: relative;
+      transition: color 0.2s;
+    }
+    .nav-link::after {
+      content: '';
+      position: absolute; bottom: -2px; left: 0; width: 0; height: 2px;
+      background: var(--teal);
+      transition: width 0.3s;
+    }
+    .nav-link:hover { color: var(--teal); }
+    .nav-link:hover::after { width: 100%; }
+
+    /* ─── Mobile menu ─── */
+    #mobile-menu {
+      display: none;
+      flex-direction: column;
+      background: var(--navy-card);
+      border-top: 1px solid var(--navy-border);
+      padding: 1rem 1.5rem;
+      gap: 1rem;
+    }
+    #mobile-menu.open { display: flex; }
+
+    .hamburger-line {
+      display: block; width: 22px; height: 2px;
+      background: var(--text-bright);
+      transition: transform 0.3s, opacity 0.3s;
+    }
+    #hamburger.open .hamburger-line:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+    #hamburger.open .hamburger-line:nth-child(2) { opacity: 0; }
+    #hamburger.open .hamburger-line:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+
+    /* ─── Hero ─── */
+    #hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 8rem 1.5rem 4rem;
+      position: relative;
+    }
+
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: rgba(45,212,191,0.1);
+      border: 1px solid rgba(45,212,191,0.3);
+      border-radius: 999px;
+      padding: 0.35rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--teal);
+      margin-bottom: 2rem;
+      animation: fadeDown 0.6s ease both;
+    }
+
+    .hero-title {
+      font-size: clamp(3rem, 8vw, 6.5rem);
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -0.03em;
+      animation: fadeUp 0.7s 0.1s ease both;
+    }
+
+    .hero-title .word-tail { color: white; }
+    .hero-title .word-wind { color: var(--teal); }
+    .hero-title .word-css {
+      -webkit-text-stroke: 2px var(--teal);
+      color: transparent;
+    }
+
+    .hero-sub {
+      margin-top: 1.5rem;
+      font-size: clamp(1rem, 2vw, 1.25rem);
+      color: var(--text-dim);
+      max-width: 520px;
+      line-height: 1.7;
+      animation: fadeUp 0.7s 0.2s ease both;
+    }
+
+    .hero-cta {
+      margin-top: 2.5rem;
+      display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center;
+      animation: fadeUp 0.7s 0.3s ease both;
+    }
+
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: var(--teal);
+      color: var(--navy);
+      font-weight: 700;
+      font-size: 0.9rem;
+      padding: 0.8rem 2rem;
+      border-radius: 8px;
+      text-decoration: none;
+      border: none; cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(45,212,191,0.4);
+      background: #5eead4;
+    }
+
+    .btn-outline {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: transparent;
+      color: var(--teal);
+      font-weight: 700;
+      font-size: 0.9rem;
+      padding: 0.8rem 2rem;
+      border-radius: 8px;
+      border: 1.5px solid var(--teal);
+      text-decoration: none; cursor: pointer;
+      transition: transform 0.2s, background 0.2s, color 0.2s;
+    }
+    .btn-outline:hover {
+      transform: translateY(-2px);
+      background: rgba(45,212,191,0.1);
+    }
+
+    /* ─── Stats strip ─── */
+    .stats-strip {
+      display: flex; flex-wrap: wrap; gap: 1px;
+      background: var(--navy-border);
+      border: 1px solid var(--navy-border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-top: 4rem;
+      animation: fadeUp 0.7s 0.4s ease both;
+    }
+    .stat-item {
+      flex: 1; min-width: 140px;
+      background: var(--navy-card);
+      padding: 1.5rem;
+      text-align: center;
+    }
+    .stat-num { font-size: 2rem; font-weight: 900; color: var(--teal); }
+    .stat-label { font-size: 0.8rem; color: var(--text-dim); margin-top: 0.25rem; letter-spacing: 0.05em; text-transform: uppercase; }
+
+    /* ─── Section titles ─── */
+    .section-tag {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--teal);
+      border: 1px solid rgba(45,212,191,0.3);
+      border-radius: 4px;
+      padding: 0.25rem 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .section-title {
+      font-size: clamp(1.75rem, 4vw, 2.75rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+    }
+
+    .section-desc {
+      color: var(--text-dim);
+      margin-top: 0.75rem;
+      font-size: 1.05rem;
+      line-height: 1.7;
+      max-width: 540px;
+    }
+
+    /* ─── Component Cards ─── */
+    .component-card {
+      background: var(--navy-card);
+      border: 1px solid var(--navy-border);
+      border-radius: 16px;
+      overflow: hidden;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    .component-card:hover {
+      border-color: rgba(45,212,191,0.35);
+      box-shadow: 0 0 30px rgba(45,212,191,0.07);
+    }
+
+    .card-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--navy-border);
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+    }
+
+    .card-title { font-size: 1.1rem; font-weight: 700; }
+    .card-desc { font-size: 0.85rem; color: var(--text-dim); margin-top: 0.25rem; }
+
+    .card-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
+
+    /* ─── Code block ─── */
+    .code-block {
+      position: relative;
+      background: #0d1117;
+      border-top: 1px solid var(--navy-border);
+    }
+
+    .code-toolbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.5rem 1rem;
+      background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid var(--navy-border);
+    }
+
+    .code-dots { display: flex; gap: 6px; }
+    .code-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .dot-red { background: #ff5f57; }
+    .dot-yellow { background: #febc2e; }
+    .dot-green { background: #28c840; }
+
+    .code-lang { font-size: 0.7rem; color: var(--text-dim); font-family: 'Space Mono', monospace; letter-spacing: 0.1em; }
+
+    pre.code-content {
+      padding: 1.25rem 1.5rem;
+      overflow-x: auto;
+      font-size: 0.78rem;
+      line-height: 1.7;
+      color: #e2e8f0;
+    }
+
+    /* Syntax highlighting */
+    .tok-class { color: #2dd4bf; }
+    .tok-string { color: #86efac; }
+    .tok-tag { color: #f9a8d4; }
+    .tok-attr { color: #93c5fd; }
+    .tok-comment { color: #4b5563; font-style: italic; }
+
+    /* ─── Preview pane ─── */
+    .preview-pane {
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height 0.5s cubic-bezier(0.4,0,0.2,1), opacity 0.4s ease, padding 0.4s ease;
+      opacity: 0;
+      padding: 0 1.5rem;
+      border-top: 0px solid var(--navy-border);
+    }
+    .preview-pane.open {
+      max-height: 600px;
+      opacity: 1;
+      padding: 1.5rem;
+      border-top: 1px solid var(--navy-border);
+    }
+
+    .preview-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      margin-bottom: 1rem;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .preview-label::before {
+      content: '';
+      display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 6px #22c55e;
+    }
+
+    /* ─── Btn styles ─── */
+    .action-btn {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.45rem 1rem;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      border: 1px solid var(--navy-border);
+      background: rgba(255,255,255,0.04);
+      color: var(--text-dim);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .action-btn:hover { border-color: var(--teal); color: var(--teal); background: rgba(45,212,191,0.08); }
+    .action-btn.copied { border-color: #22c55e; color: #22c55e; background: rgba(34,197,94,0.08); }
+
+    /* ─── Comparison section ─── */
+    .compare-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--navy-border);
+      border: 1px solid var(--navy-border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    @media (max-width: 768px) { .compare-grid { grid-template-columns: 1fr; } }
+
+    .compare-side {
+      background: var(--navy-card);
+      padding: 0;
+    }
+
+    .compare-header {
+      padding: 1rem 1.5rem;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid var(--navy-border);
+    }
+
+    .compare-title { font-weight: 700; font-size: 0.95rem; }
+    .compare-badge {
+      font-size: 0.7rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 4px;
+    }
+    .badge-old { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+    .badge-new { background: rgba(45,212,191,0.15); color: var(--teal); border: 1px solid rgba(45,212,191,0.3); }
+
+    .compare-meta {
+      display: flex; gap: 1.5rem; padding: 0.75rem 1.5rem;
+      border-bottom: 1px solid var(--navy-border);
+      background: rgba(0,0,0,0.2);
+    }
+    .meta-item { text-align: center; }
+    .meta-val { font-size: 1.3rem; font-weight: 800; }
+    .meta-label { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+    .meta-bad { color: #f87171; }
+    .meta-good { color: var(--teal); }
+
+    /* ─── Animations ─── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulse-ring {
+      0%   { box-shadow: 0 0 0 0 rgba(45,212,191,0.4); }
+      70%  { box-shadow: 0 0 0 12px rgba(45,212,191,0); }
+      100% { box-shadow: 0 0 0 0 rgba(45,212,191,0); }
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(32px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .reveal.visible { opacity: 1; transform: none; }
+
+    /* ─── Section spacing ─── */
+    section { padding: 6rem 0; }
+
+    /* ─── Feature grid ─── */
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1px; background: var(--navy-border); border: 1px solid var(--navy-border); border-radius: 16px; overflow: hidden; }
+    .feature-item { background: var(--navy-card); padding: 1.75rem; transition: background 0.2s; }
+    .feature-item:hover { background: rgba(26,34,53,0.8); }
+    .feature-icon { font-size: 1.75rem; margin-bottom: 1rem; }
+    .feature-title { font-weight: 700; font-size: 1rem; }
+    .feature-desc { font-size: 0.85rem; color: var(--text-dim); margin-top: 0.4rem; line-height: 1.6; }
+
+    /* ─── Footer ─── */
+    footer {
+      border-top: 1px solid var(--navy-border);
+      padding: 2.5rem 0;
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 0.85rem;
+    }
+
+    /* ─── Teal glow text ─── */
+    .glow { text-shadow: 0 0 20px rgba(45,212,191,0.5); }
+  </style>
+</head>
+<body>
+
+  <!-- Background blobs -->
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+
+  <!-- ══════════════════════════════
+       NAVBAR
+  ══════════════════════════════ -->
+  <nav id="navbar">
+    <div class="container-xl">
+      <div style="display:flex; align-items:center; justify-content:space-between; height:60px;">
+        <!-- Logo -->
+        <a href="#hero" style="display:flex; align-items:center; gap:0.6rem; text-decoration:none;">
+          <div style="width:32px; height:32px; background:linear-gradient(135deg,var(--teal),var(--cyan)); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1rem;">≈</div>
+          <span style="font-weight:800; font-size:1rem; color:white;">Tailwind<span style="color:var(--teal);">CSS</span></span>
+        </a>
+
+        <!-- Desktop links -->
+        <div id="nav-links" style="display:flex; gap:2rem; align-items:center;">
+          <a class="nav-link" href="#componentes">Componentes</a>
+          <a class="nav-link" href="#comparacao">Comparação</a>
+          <a class="nav-link" href="#features">Features</a>
+          <a class="btn-primary" href="#componentes" style="padding:0.5rem 1.25rem; font-size:0.8rem;">Ver Demos →</a>
+        </div>
+
+        <!-- Hamburger -->
+        <button id="hamburger" onclick="toggleMenu()" style="display:none; flex-direction:column; gap:6px; background:none; border:none; cursor:pointer; padding:4px;">
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile menu -->
+    <div id="mobile-menu">
+      <a class="nav-link" href="#componentes" onclick="toggleMenu()">Componentes</a>
+      <a class="nav-link" href="#comparacao" onclick="toggleMenu()">Comparação</a>
+      <a class="nav-link" href="#features" onclick="toggleMenu()">Features</a>
+    </div>
+  </nav>
+
+  <main>
+    <!-- ══════════════════════════════
+         HERO
+    ══════════════════════════════ -->
+    <section id="hero">
+      <div class="container-xl" style="display:flex; flex-direction:column; align-items:center;">
+        <div class="hero-badge">
+          <span>⚡</span> Showcase Interativo · 2025
+        </div>
+
+        <h1 class="hero-title">
+          <span class="word-tail">Tail</span><span class="word-wind glow">wind</span> <span class="word-css">CSS</span>
+        </h1>
+
+        <p class="hero-sub">
+          Explore componentes reais com código, preview e comparações. Descubra por que Tailwind acelera o desenvolvimento front-end.
+        </p>
+
+        <div class="hero-cta">
+          <a class="btn-primary" href="#componentes">Explorar Componentes</a>
+          <a class="btn-outline" href="#comparacao">Ver Comparação</a>
+        </div>
+
+        <div class="stats-strip">
+          <div class="stat-item">
+            <div class="stat-num">5×</div>
+            <div class="stat-label">Mais rápido</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-num">80%</div>
+            <div class="stat-label">Menos CSS</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-num">0</div>
+            <div class="stat-label">Conflitos</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-num">∞</div>
+            <div class="stat-label">Flexibilidade</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════
+         COMPONENTES
+    ══════════════════════════════ -->
+    <section id="componentes">
+      <div class="container-xl">
+        <div class="reveal" style="margin-bottom:3rem;">
+          <div class="section-tag">Componentes</div>
+          <h2 class="section-title">Componentes Interativos</h2>
+          <p class="section-desc">Clique em "Ver Resultado" para ver o componente renderizado ao vivo, ou copie o código direto.</p>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:2rem;">
+
+          <!-- ── BUTTONS ── -->
+          <div class="component-card reveal" id="comp-buttons">
+            <div class="card-header">
+              <div>
+                <div class="card-title">🔘 Buttons</div>
+                <div class="card-desc">Variações de botões com hover effects e animações via Tailwind.</div>
+              </div>
+              <div class="card-actions">
+                <button class="action-btn" onclick="copyCode('code-buttons', this)">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                  Copiar
+                </button>
+                <button class="action-btn" onclick="togglePreview('preview-buttons', this)">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/></svg>
+                  Ver Resultado
+                </button>
+              </div>
+            </div>
+
+            <div class="code-block">
+              <div class="code-toolbar">
+                <div class="code-dots">
+                  <span class="code-dot dot-red"></span>
+                  <span class="code-dot dot-yellow"></span>
+                  <span class="code-dot dot-green"></span>
+                </div>
+                <span class="code-lang">HTML · Tailwind CSS</span>
+              </div>
+              <pre class="code-content" id="code-buttons"><span class="tok-comment">&lt;!-- Botões Tailwind CSS --&gt;</span>
+<span class="tok-tag">&lt;div</span> <span class="tok-attr">class=</span><span class="tok-string">"flex flex-wrap gap-3"</span><span class="tok-tag">&gt;</span>
+
+  <span class="tok-comment">&lt;!-- Primary --&gt;</span>
+  <span class="tok-tag">&lt;button</span> <span class="tok-attr">class=</span><span class="tok-string">"bg-teal-400 hover:bg-teal-300 text-gray-900
+    font-bold px-5 py-2.5 rounded-lg
+    transition-all duration-200
+    hover:-translate-y-0.5 hover:shadow-lg
+    hover:shadow-teal-400/30 active:scale-95"</span><span class="tok-tag">&gt;</span>
+    Primary
+  <span class="tok-tag">&lt;/button&gt;</span>
+
+  <span class="tok-comment">&lt;!-- Outline --&gt;</span>
+  <span class="tok-tag">&lt;button</span> <span class="tok-attr">class=</span><span class="tok-string">"border border-teal-400 text-teal-400
+    hover:bg-teal-400/10 font-bold px-5 py-2.5
+    rounded-lg transition-all duration-200
+    hover:-translate-y-0.5"</span><span class="tok-tag">&gt;</span>
+    Outline
+  <span class="tok-tag">&lt;/button&gt;</span>
+
+  <span class="tok-comment">&lt;!-- Ghost --&gt;</span>
+  <span class="tok-tag">&lt;button</span> <span class="tok-attr">class=</span><span class="tok-string">"text-slate-400 hover:text-white
+    hover:bg-white/5 font-semibold px-5 py-2.5
+    rounded-lg transition-all duration-200"</span><span class="tok-tag">&gt;</span>
+    Ghost
+  <span class="tok-tag">&lt;/button&gt;</span>
+
+  <span class="tok-comment">&lt;!-- Danger --&gt;</span>
+  <span class="tok-tag">&lt;button</span> <span class="tok-attr">class=</span><span class="tok-string">"bg-red-500 hover:bg-red-400 text-white
+    font-bold px-5 py-2.5 rounded-lg
+    transition-all duration-200
+    hover:shadow-lg hover:shadow-red-500/30"</span><span class="tok-tag">&gt;</span>
+    Danger
+  <span class="tok-tag">&lt;/button&gt;</span>
+
+  <span class="tok-comment">&lt;!-- Loading --&gt;</span>
+  <span class="tok-tag">&lt;button</span> <span class="tok-attr">class=</span><span class="tok-string">"bg-indigo-600 text-white font-bold
+    px-5 py-2.5 rounded-lg flex items-center gap-2
+    opacity-80 cursor-not-allowed"</span> <span class="tok-attr">disabled</span><span class="tok-tag">&gt;</span>
+    <span class="tok-tag">&lt;svg</span> <span class="tok-attr">class=</span><span class="tok-string">"animate-spin h-4 w-4"</span> <span class="tok-attr">viewBox=</span><span class="tok-string">"0 0 24 24"</span><span class="tok-tag">&gt;</span>...<span class="tok-tag">&lt;/svg&gt;</span>
+    Loading
+  <span class="tok-tag">&lt;/button&gt;</span>
+
+<span class="tok-tag">&lt;/div&gt;</span></pre>
+            </div>
+
+            <div class="preview-pane" id="preview-buttons">
+              <div class="preview-label">Preview ao vivo</div>
+              <div class="flex flex-wrap gap-3 p-4 bg-gray-900 rounded-xl">
+                <button class="bg-teal-400 hover:bg-teal-300 text-gray-900 font-bold px-5 py-2.5 rounded-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-teal-400/30 active:scale-95">Primary</button>
+                <button class="border border-teal-400 text-teal-400 hover:bg-teal-400/10 font-bold px-5 py-2.5 rounded-lg transition-all duration-200 hover:-translate-y-0.5">Outline</button>
+                <button class="text-slate-400 hover:text-white hover:bg-white/5 font-semibold px-5 py-2.5 rounded-lg transition-all duration-200">Ghost</button>
+                <button class="bg-red-500 hover:bg-red-400 text-white font-bold px-5 py-2.5 rounded-lg transition-all duration-200 hover:shadow-lg hover:shadow-red-500/30">Danger</button>
+                <button class="bg-indigo-600 text-white font-bold px-5 py-2.5 rounded-lg flex items-center gap-2 opacity-80 cursor-not-allowed" disabled>
+                  <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
+                  Loading
+                </button>
+                <button class="bg-gradient-to-r from-teal-400 to-cyan-400 text-gray-900 font-bold px-5 py-2.5 rounded-lg transition-all duration-200 hover:scale-105 hover:shadow-xl hover:shadow-cyan-400/30">Gradient</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── CARDS ── -->
+          <div class="component-card reveal" id="comp-cards">
+            <div class="card-header">
+              <div>
+                <div class="card-title">🃏 Cards</div>
+                <div class="card-desc">Cards modernos com glassmorphism e efeitos de hover.</div>
+              </div>
+              <div class="card-actions">
+                <button class="action-btn" onclick="copyCode('code-cards', this)">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                  Copiar
+                </button>
+                <button class="action-btn" onclick="togglePreview('preview-cards', this)">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/></svg>
+                  Ver Resultado
+                </button>
+              </div>
+            </div>
+
+            <div class="code-block">
+              <div class="code-toolbar">
+                <div class="code-dots">
+                  <span class="code-dot dot-red"></span>
+                  <span class="code-dot dot-yellow"></span>
+                  <span class="code-dot dot-green"></span>
+                </div>
+                <span class="code-lang">HTML · Tailwind CSS</span>
+              </div>
+              <pre class="code-content" id="code-cards"><span class="tok-comment">&lt;!-- Card com Tailwind --&gt;</span>
+<span class="tok-tag">&lt;div</span> <span class="tok-attr">class=</span><span class="tok-string">"bg-white/5 backdrop-blur-md
+  border border-white/10 rounded-2xl p-6
+  hover:border-teal-400/40
+  hover:shadow-xl hover:shadow-teal-400/10
+  hover:-translate-y-1
+  transition-all duration-300 group"</span><span class="tok-tag">&gt;</span>
+
+  <span class="tok-comment">&lt;!-- Badge --&gt;</span>
+  <span class="tok-tag">&lt;span</span> <span class="tok-attr">class=</span><span class="tok-string">"text-xs font-bold uppercase tracking-widest
+    text-teal-400 bg-teal-400/10 px-2.5 py-1 rounded-full"</span><span class="tok-tag">&gt;</span>
+    Novo
+  <span class="tok-tag">&lt;/span&gt;</span>
+
+  <span class="tok-comment">&lt;!-- Título --&gt;</span>
+  <span class="tok-tag">&lt;h3</span> <span class="tok-attr">class=</span><span class="tok-string">"mt-4 text-xl font-bold
+    group-hover:text-teal-400 transition-colors"</span><span class="tok-tag">&gt;</span>
+    Utility-First CSS
+  <span class="tok-tag">&lt;/h3&gt;</span>
+
+  <span class="tok-comment">&lt;!-- Descrição --&gt;</span>
+  <span class="tok-tag">&lt;p</span> <span class="tok-attr">class=</span><span class="tok-string">"mt-2 text-slate-400 text-sm leading-relaxed"</span><span class="tok-tag">&gt;</span>
+    Construa interfaces modernas sem sair do HTML.
+  <span class="tok-tag">&lt;/p&gt;</span>
+
+  <span class="tok-comment">&lt;!-- Footer do card --&gt;</span>
+  <span class="tok-tag">&lt;div</span> <span class="tok-attr">class=</span><span class="tok-string">"mt-5 flex items-center justify-between"</span><span class="tok-tag">&gt;</span>
+    <span class="tok-tag">&lt;span</span> <span class="tok-attr">class=</span><span class="tok-string">"text-xs text-slate-500"</span><span class="tok-tag">&gt;</span>5 min de leitura<span class="tok-tag">&lt;/span&gt;</span>
+    <span class="tok-tag">&lt;button</span> <span class="tok-attr">class=</span><span class="tok-string">"text-teal-400 hover:text-teal-300
+      text-sm font-semibold transition-colors"</span><span class="tok-tag">&gt;</span>
+      Ler mais →
+    <span class="tok-tag">&lt;/button&gt;</span>
+  <span class="tok-tag">&lt;/div&gt;</span>
+<span class="tok-tag">&lt;/div&gt;</span></pre>
+            </div>
+
+            <div class="preview-pane" id="preview-cards">
+              <div class="preview-label">Preview ao vivo</div>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-gray-900 rounded-xl">
+                <!-- Card 1 -->
+                <div class="bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-5 hover:border-teal-400/40 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group cursor-pointer">
+                  <span class="text-xs font-bold uppercase tracking-widest text-teal-400 bg-teal-400/10 px-2.5 py-1 rounded-full">Novo</span>
+                  <h3 class="mt-4 text-base font-bold group-hover:text-teal-400 transition-colors">Utility-First</h3>
+                  <p class="mt-2 text-slate-400 text-sm leading-relaxed">Construa interfaces sem sair do HTML.</p>
+                  <div class="mt-4 flex items-center justify-between">
+                    <span class="text-xs text-slate-500">5 min</span>
+                    <button class="text-teal-400 text-sm font-semibold">Ler →</button>
+                  </div>
+                </div>
+                <!-- Card 2 -->
+                <div class="bg-gradient-to-br from-teal-900/40 to-cyan-900/20 border border-teal-700/30 rounded-2xl p-5 hover:-translate-y-1 transition-all duration-300 group cursor-pointer">
+                  <span class="text-xs font-bold uppercase tracking-widest text-cyan-400 bg-cyan-400/10 px-2.5 py-1 rounded-full">Popular</span>
+                  <h3 class="mt-4 text-base font-bold group-hover:text-cyan-400 transition-colors">Responsivo</h3>
+                  <p class="mt-2 text-slate-400 text-sm leading-relaxed">Breakpoints intuitivos com prefixos sm, md, lg.</p>
+                  <div class="mt-4 flex items-center justify-between">
+                    <span class="text-xs text-slate-500">8 min</span>
+                    <button class="text-cyan-400 text-sm font-semibold">Ler →</button>
+                  </div>
+                </div>
+                <!-- Card 3 -->
+                <div class="bg-white/5 border border-white/10 rounded-2xl p-5 hover:border-indigo-400/40 hover:-translate-y-1 transition-all duration-300 group cursor-pointer">
+                  <span class="text-xs font-bold uppercase tracking-widest text-indigo-400 bg-indigo-400/10 px-2.5 py-1 rounded-full">Avançado</span>
+                  <h3 class="mt-4 text-base font-bold group-hover:text-indigo-400 transition-colors">Dark Mode</h3>
+                  <p class="mt-2 text-slate-400 text-sm leading-relaxed">Dark mode nativo com o prefixo dark:.</p>
+                  <div class="mt-4 flex items-center justify-between">
+                    <span class="text-xs text-slate-500">3 min</span>
+                    <button class="text-indigo-400 text-sm font-semibold">Ler →</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── FORMS ── -->
+          <div class="component-card reveal" id="comp-forms">
+            <div class="card-header">
+              <div>
+                <div class="card-title">📝 Forms</div>
+                <div class="card-desc">Formulários elegantes com validação visual e focus states.</div>
+              </div>
+              <div class="card-actions">
+                <button class="action-btn" onclick="copyCode('code-forms', this)">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                  Copiar
+                </button>
+                <button class="action-btn" onclick="togglePreview('preview-forms', this)">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/></svg>
+                  Ver Resultado
+                </button>
+              </div>
+            </div>
+
+            <div class="code-block">
+              <div class="code-toolbar">
+                <div class="code-dots"><span class="code-dot dot-red"></span><span class="code-dot dot-yellow"></span><span class="code-dot dot-green"></span></div>
+                <span class="code-lang">HTML · Tailwind CSS</span>
+              </div>
+              <pre class="code-content" id="code-forms"><span class="tok-comment">&lt;!-- Form com Tailwind --&gt;</span>
+<span class="tok-tag">&lt;form</span> <span class="tok-attr">class=</span><span class="tok-string">"space-y-4 max-w-md"</span><span class="tok-tag">&gt;</span>
+  <span class="tok-comment">&lt;!-- Input --&gt;</span>
+  <span class="tok-tag">&lt;div&gt;</span>
+    <span class="tok-tag">&lt;label</span> <span class="tok-attr">class=</span><span class="tok-string">"block text-sm font-semibold
+      text-slate-300 mb-1.5"</span><span class="tok-tag">&gt;</span>Nome<span class="tok-tag">&lt;/label&gt;</span>
+    <span class="tok-tag">&lt;input</span>
+      <span class="tok-attr">class=</span><span class="tok-string">"w-full bg-white/5 border border-white/10
+        rounded-lg px-4 py-2.5 text-white
+        placeholder:text-slate-500
+        focus:outline-none focus:ring-2
+        focus:ring-teal-400/50 focus:border-teal-400
+        transition-all duration-200"</span>
+      <span class="tok-attr">placeholder=</span><span class="tok-string">"Seu nome"</span>
+    <span class="tok-tag">/&gt;</span>
+  <span class="tok-tag">&lt;/div&gt;</span>
+
+  <span class="tok-comment">&lt;!-- Select --&gt;</span>
+  <span class="tok-tag">&lt;div&gt;</span>
+    <span class="tok-tag">&lt;label</span> <span class="tok-attr">class=</span><span class="tok-string">"block text-sm font-semibold
+      text-slate-300 mb-1.5"</span><span class="tok-tag">&gt;</span>Plano<span class="tok-tag">&lt;/label&gt;</span>
+    <span class="tok-tag">&lt;select</span> <span class="tok-attr">class=</span><span class="tok-string">"w-full bg-gray-800 border
+      border-white/10 rounded-lg px-4 py-2.5
+      text-white focus:outline-none
+      focus:ring-2 focus:ring-teal-400/50"</span><span class="tok-tag">&gt;</span>
+      <span class="tok-tag">&lt;option&gt;</span>Gratuito<span class="tok-tag">&lt;/option&gt;</span>
+      <span class="tok-tag">&lt;option&gt;</span>Pro<span class="tok-tag">&lt;/option&gt;</span>
+    <span class="tok-tag">&lt;/select&gt;</span>
+  <span class="tok-tag">&lt;/div&gt;</span>
+
+  <span class="tok-comment">&lt;!-- Submit --&gt;</span>
+  <span class="tok-tag">&lt;button</span> <span class="tok-attr">type=</span><span class="tok-string">"submit"</span>
+    <span class="tok-attr">class=</span><span class="tok-string">"w-full bg-teal-400 text-gray-900
+      font-bold py-3 rounded-lg
+      hover:bg-teal-300 active:scale-[0.98]
+      transition-all duration-200"</span><span class="tok-tag">&gt;</span>
+    Enviar
+  <span class="tok-tag">&lt;/button&gt;</span>
+<span class="tok-tag">&lt;/form&gt;</span></pre>
+            </div>
+
+            <div class="preview-pane" id="preview-forms">
+              <div class="preview-label">Preview ao vivo</div>
+              <div class="p-6 bg-gray-900 rounded-xl max-w-md">
+                <div class="space-y-4">
+                  <div>
+                    <label class="block text-sm font-semibold text-slate-300 mb-1.5">Nome</label>
+                    <input class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-400/50 focus:border-teal-400 transition-all duration-200" placeholder="Seu nome"/>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-semibold text-slate-300 mb-1.5">Email</label>
+                    <input type="email" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-400/50 focus:border-teal-400 transition-all duration-200" placeholder="email@exemplo.com"/>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-semibold text-slate-300 mb-1.5">Plano</label>
+                    <select class="w-full bg-gray-800 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-teal-400/50">
+                      <option>Gratuito</option>
+                      <option>Pro — R$ 29/mês</option>
+                      <option>Enterprise</option>
+                    </select>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <input type="checkbox" id="terms" class="w-4 h-4 accent-teal-400"/>
+                    <label for="terms" class="text-sm text-slate-400">Aceito os termos de uso</label>
+                  </div>
+                  <button class="w-full bg-teal-400 text-gray-900 font-bold py-3 rounded-lg hover:bg-teal-300 active:scale-[0.98] transition-all duration-200">Criar Conta</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── NAVBAR ── -->
+          <div class="component-card reveal" id="comp-navbar">
+            <div class="card-header">
+              <div>
+                <div class="card-title">🧭 Navbar</div>
+                <div class="card-desc">Navbar responsiva com glassmorphism, logo e menu mobile.</div>
+              </div>
+              <div class="card-actions">
+                <button class="action-btn" onclick="copyCode('code-navbar', this)">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                  Copiar
+                </button>
+                <button class="action-btn" onclick="togglePreview('preview-navbar', this)">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/></svg>
+                  Ver Resultado
+                </button>
+              </div>
+            </div>
+
+            <div class="code-block">
+              <div class="code-toolbar">
+                <div class="code-dots"><span class="code-dot dot-red"></span><span class="code-dot dot-yellow"></span><span class="code-dot dot-green"></span></div>
+                <span class="code-lang">HTML · Tailwind CSS</span>
+              </div>
+              <pre class="code-content" id="code-navbar"><span class="tok-comment">&lt;!-- Navbar Glassmorphism --&gt;</span>
+<span class="tok-tag">&lt;nav</span> <span class="tok-attr">class=</span><span class="tok-string">"backdrop-blur-md bg-white/5
+  border-b border-white/10 sticky top-0 z-50"</span><span class="tok-tag">&gt;</span>
+  <span class="tok-tag">&lt;div</span> <span class="tok-attr">class=</span><span class="tok-string">"max-w-6xl mx-auto px-4 h-16
+    flex items-center justify-between"</span><span class="tok-tag">&gt;</span>
+
+    <span class="tok-comment">&lt;!-- Logo --&gt;</span>
+    <span class="tok-tag">&lt;a</span> <span class="tok-attr">href=</span><span class="tok-string">"#"</span>
+      <span class="tok-attr">class=</span><span class="tok-string">"font-black text-xl
+      bg-gradient-to-r from-teal-400 to-cyan-400
+      bg-clip-text text-transparent"</span><span class="tok-tag">&gt;</span>
+      Logo
+    <span class="tok-tag">&lt;/a&gt;</span>
+
+    <span class="tok-comment">&lt;!-- Links desktop --&gt;</span>
+    <span class="tok-tag">&lt;div</span> <span class="tok-attr">class=</span><span class="tok-string">"hidden md:flex gap-6"</span><span class="tok-tag">&gt;</span>
+      <span class="tok-tag">&lt;a</span> <span class="tok-attr">class=</span><span class="tok-string">"text-slate-400 hover:text-white
+        text-sm font-medium transition-colors"</span>
+        <span class="tok-attr">href=</span><span class="tok-string">"#"</span><span class="tok-tag">&gt;</span>Home<span class="tok-tag">&lt;/a&gt;</span>
+      <span class="tok-tag">&lt;a</span> <span class="tok-attr">class=</span><span class="tok-string">"text-slate-400 hover:text-white
+        text-sm font-medium transition-colors"</span>
+        <span class="tok-attr">href=</span><span class="tok-string">"#"</span><span class="tok-tag">&gt;</span>Docs<span class="tok-tag">&lt;/a&gt;</span>
+    <span class="tok-tag">&lt;/div&gt;</span>
+
+    <span class="tok-comment">&lt;!-- CTA --&gt;</span>
+    <span class="tok-tag">&lt;button</span> <span class="tok-attr">class=</span><span class="tok-string">"bg-teal-400 text-gray-900
+      font-bold px-4 py-2 rounded-lg text-sm
+      hover:bg-teal-300 transition-colors"</span><span class="tok-tag">&gt;</span>
+      Get Started
+    <span class="tok-tag">&lt;/button&gt;</span>
+
+  <span class="tok-tag">&lt;/div&gt;</span>
+<span class="tok-tag">&lt;/nav&gt;</span></pre>
+            </div>
+
+            <div class="preview-pane" id="preview-navbar">
+              <div class="preview-label">Preview ao vivo</div>
+              <div class="bg-gray-900 rounded-xl overflow-hidden">
+                <nav class="backdrop-blur bg-white/5 border-b border-white/10">
+                  <div class="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
+                    <a href="#" class="font-black text-lg bg-gradient-to-r from-teal-400 to-cyan-400 bg-clip-text text-transparent">Tailwind</a>
+                    <div class="hidden sm:flex gap-6">
+                      <a class="text-slate-400 hover:text-white text-sm font-medium transition-colors" href="#">Home</a>
+                      <a class="text-slate-400 hover:text-white text-sm font-medium transition-colors" href="#">Docs</a>
+                      <a class="text-slate-400 hover:text-white text-sm font-medium transition-colors" href="#">Blog</a>
+                    </div>
+                    <button class="bg-teal-400 text-gray-900 font-bold px-4 py-1.5 rounded-lg text-sm hover:bg-teal-300 transition-colors">Get Started</button>
+                  </div>
+                </nav>
+                <div class="p-8 text-center text-slate-500 text-sm">← Conteúdo da página →</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── DASHBOARD ── -->
+          <div class="component-card reveal" id="comp-dash">
+            <div class="card-header">
+              <div>
+                <div class="card-title">📊 Dashboard</div>
+                <div class="card-desc">Widget de dashboard com métricas, gráfico de barras e status.</div>
+              </div>
+              <div class="card-actions">
+                <button class="action-btn" onclick="copyCode('code-dash', this)">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                  Copiar
+                </button>
+                <button class="action-btn" onclick="togglePreview('preview-dash', this)">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/></svg>
+                  Ver Resultado
+                </button>
+              </div>
+            </div>
+
+            <div class="code-block">
+              <div class="code-toolbar">
+                <div class="code-dots"><span class="code-dot dot-red"></span><span class="code-dot dot-yellow"></span><span class="code-dot dot-green"></span></div>
+                <span class="code-lang">HTML · Tailwind CSS</span>
+              </div>
+              <pre class="code-content" id="code-dash"><span class="tok-comment">&lt;!-- Stat Card --&gt;</span>
+<span class="tok-tag">&lt;div</span> <span class="tok-attr">class=</span><span class="tok-string">"grid grid-cols-3 gap-4"</span><span class="tok-tag">&gt;</span>
+  <span class="tok-tag">&lt;div</span> <span class="tok-attr">class=</span><span class="tok-string">"bg-white/5 border border-white/10
+    rounded-2xl p-5"</span><span class="tok-tag">&gt;</span>
+    <span class="tok-tag">&lt;div</span> <span class="tok-attr">class=</span><span class="tok-string">"text-slate-400 text-xs
+      uppercase tracking-widest"</span><span class="tok-tag">&gt;</span>Receita<span class="tok-tag">&lt;/div&gt;</span>
+    <span class="tok-tag">&lt;div</span> <span class="tok-attr">class=</span><span class="tok-string">"text-2xl font-black mt-2"</span><span class="tok-tag">&gt;</span>
+      R$48.290
+    <span class="tok-tag">&lt;/div&gt;</span>
+    <span class="tok-tag">&lt;div</span> <span class="tok-attr">class=</span><span class="tok-string">"text-emerald-400 text-xs mt-1.5
+      font-semibold"</span><span class="tok-tag">&gt;</span>
+      ↑ +12.5% este mês
+    <span class="tok-tag">&lt;/div&gt;</span>
+  <span class="tok-tag">&lt;/div&gt;</span>
+<span class="tok-tag">&lt;/div&gt;</span>
+
+<span class="tok-comment">&lt;!-- Barra de progresso --&gt;</span>
+<span class="tok-tag">&lt;div</span> <span class="tok-attr">class=</span><span class="tok-string">"mt-4"</span><span class="tok-tag">&gt;</span>
+  <span class="tok-tag">&lt;div</span> <span class="tok-attr">class=</span><span class="tok-string">"flex justify-between text-xs
+    text-slate-400 mb-1.5"</span><span class="tok-tag">&gt;</span>
+    <span class="tok-tag">&lt;span&gt;</span>Meta mensal<span class="tok-tag">&lt;/span&gt;</span>
+    <span class="tok-tag">&lt;span&gt;</span>78%<span class="tok-tag">&lt;/span&gt;</span>
+  <span class="tok-tag">&lt;/div&gt;</span>
+  <span class="tok-tag">&lt;div</span> <span class="tok-attr">class=</span><span class="tok-string">"h-2 bg-white/10 rounded-full"</span><span class="tok-tag">&gt;</span>
+    <span class="tok-tag">&lt;div</span> <span class="tok-attr">class=</span><span class="tok-string">"h-full w-[78%] rounded-full
+      bg-gradient-to-r from-teal-400 to-cyan-400"</span><span class="tok-tag">&gt;</span>
+    <span class="tok-tag">&lt;/div&gt;</span>
+  <span class="tok-tag">&lt;/div&gt;</span>
+<span class="tok-tag">&lt;/div&gt;</span></pre>
+            </div>
+
+            <div class="preview-pane" id="preview-dash">
+              <div class="preview-label">Preview ao vivo</div>
+              <div class="bg-gray-900 rounded-xl p-5 space-y-4">
+                <!-- Stat row -->
+                <div class="grid grid-cols-3 gap-3">
+                  <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+                    <div class="text-slate-400 text-xs uppercase tracking-widest">Receita</div>
+                    <div class="text-xl font-black mt-1.5">R$48.290</div>
+                    <div class="text-emerald-400 text-xs mt-1 font-semibold">↑ +12.5%</div>
+                  </div>
+                  <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+                    <div class="text-slate-400 text-xs uppercase tracking-widest">Usuários</div>
+                    <div class="text-xl font-black mt-1.5">3.842</div>
+                    <div class="text-emerald-400 text-xs mt-1 font-semibold">↑ +5.2%</div>
+                  </div>
+                  <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+                    <div class="text-slate-400 text-xs uppercase tracking-widest">Tickets</div>
+                    <div class="text-xl font-black mt-1.5">17</div>
+                    <div class="text-red-400 text-xs mt-1 font-semibold">↓ -3 hoje</div>
+                  </div>
+                </div>
+                <!-- Bar chart -->
+                <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+                  <div class="text-sm font-semibold mb-4">Vendas semanais</div>
+                  <div class="flex items-end gap-2 h-20">
+                    <div class="flex-1 flex flex-col items-center gap-1">
+                      <div class="w-full bg-gradient-to-t from-teal-600 to-teal-400 rounded-t" style="height:45%"></div>
+                      <span class="text-xs text-slate-500">Seg</span>
+                    </div>
+                    <div class="flex-1 flex flex-col items-center gap-1">
+                      <div class="w-full bg-gradient-to-t from-teal-600 to-teal-400 rounded-t" style="height:70%"></div>
+                      <span class="text-xs text-slate-500">Ter</span>
+                    </div>
+                    <div class="flex-1 flex flex-col items-center gap-1">
+                      <div class="w-full bg-gradient-to-t from-teal-600 to-teal-400 rounded-t" style="height:55%"></div>
+                      <span class="text-xs text-slate-500">Qua</span>
+                    </div>
+                    <div class="flex-1 flex flex-col items-center gap-1">
+                      <div class="w-full bg-gradient-to-t from-cyan-500 to-cyan-300 rounded-t" style="height:90%"></div>
+                      <span class="text-xs text-slate-500">Qui</span>
+                    </div>
+                    <div class="flex-1 flex flex-col items-center gap-1">
+                      <div class="w-full bg-gradient-to-t from-teal-600 to-teal-400 rounded-t" style="height:75%"></div>
+                      <span class="text-xs text-slate-500">Sex</span>
+                    </div>
+                    <div class="flex-1 flex flex-col items-center gap-1">
+                      <div class="w-full bg-gradient-to-t from-indigo-600 to-indigo-400 rounded-t" style="height:40%"></div>
+                      <span class="text-xs text-slate-500">Sáb</span>
+                    </div>
+                    <div class="flex-1 flex flex-col items-center gap-1">
+                      <div class="w-full bg-gradient-to-t from-indigo-600 to-indigo-400 rounded-t" style="height:30%"></div>
+                      <span class="text-xs text-slate-500">Dom</span>
+                    </div>
+                  </div>
+                </div>
+                <!-- Progress -->
+                <div class="bg-white/5 border border-white/10 rounded-xl p-4 space-y-3">
+                  <div>
+                    <div class="flex justify-between text-xs text-slate-400 mb-1.5"><span>Meta mensal</span><span class="text-teal-400 font-semibold">78%</span></div>
+                    <div class="h-1.5 bg-white/10 rounded-full"><div class="h-full rounded-full bg-gradient-to-r from-teal-400 to-cyan-400" style="width:78%"></div></div>
+                  </div>
+                  <div>
+                    <div class="flex justify-between text-xs text-slate-400 mb-1.5"><span>Satisfação</span><span class="text-emerald-400 font-semibold">92%</span></div>
+                    <div class="h-1.5 bg-white/10 rounded-full"><div class="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-300" style="width:92%"></div></div>
+                  </div>
+                  <div>
+                    <div class="flex justify-between text-xs text-slate-400 mb-1.5"><span>Retenção</span><span class="text-indigo-400 font-semibold">61%</span></div>
+                    <div class="h-1.5 bg-white/10 rounded-full"><div class="h-full rounded-full bg-gradient-to-r from-indigo-500 to-indigo-300" style="width:61%"></div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- end component list -->
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════
+         COMPARAÇÃO
+    ══════════════════════════════ -->
+    <section id="comparacao" style="background: linear-gradient(180deg, transparent, rgba(45,212,191,0.03), transparent);">
+      <div class="container-xl">
+        <div class="reveal" style="margin-bottom:3rem;">
+          <div class="section-tag">Comparação</div>
+          <h2 class="section-title">CSS Tradicional <span style="color:var(--teal)">vs</span> Tailwind CSS</h2>
+          <p class="section-desc">Veja lado a lado a diferença real entre as abordagens — mesmo componente, menos código.</p>
+        </div>
+
+        <div class="compare-grid reveal">
+          <!-- CSS Tradicional -->
+          <div class="compare-side">
+            <div class="compare-header">
+              <span class="compare-title">CSS Tradicional</span>
+              <span class="compare-badge badge-old">Legado</span>
+            </div>
+            <div class="compare-meta">
+              <div class="meta-item">
+                <div class="meta-val meta-bad">28</div>
+                <div class="meta-label">Linhas</div>
+              </div>
+              <div class="meta-item">
+                <div class="meta-val meta-bad">2</div>
+                <div class="meta-label">Arquivos</div>
+              </div>
+              <div class="meta-item">
+                <div class="meta-val meta-bad">~15min</div>
+                <div class="meta-label">Tempo est.</div>
+              </div>
+            </div>
+            <pre class="code-content" style="font-size:0.72rem; padding:1.25rem;">
+<span class="tok-comment">/* styles.css */</span>
+<span class="tok-class">.card</span> {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+}
+<span class="tok-class">.card:hover</span> {
+  border-color: rgba(45,212,191,0.4);
+  box-shadow: 0 20px 40px rgba(45,212,191,0.1);
+  transform: translateY(-4px);
+}
+<span class="tok-class">.card__title</span> {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+<span class="tok-class">.card__desc</span> {
+  font-size: 0.875rem;
+  color: #94a3b8;
+  margin-top: 0.5rem;
+  line-height: 1.6;
+}
+<span class="tok-class">.card__btn</span> {
+  color: #2dd4bf;
+  font-size: 0.875rem;
+  font-weight: 600;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+<span class="tok-comment">/* index.html */</span>
+<span class="tok-tag">&lt;div</span> <span class="tok-attr">class=</span><span class="tok-string">"card"</span><span class="tok-tag">&gt;</span>
+  <span class="tok-tag">&lt;h3</span> <span class="tok-attr">class=</span><span class="tok-string">"card__title"</span><span class="tok-tag">&gt;</span>Título<span class="tok-tag">&lt;/h3&gt;</span>
+  <span class="tok-tag">&lt;p</span> <span class="tok-attr">class=</span><span class="tok-string">"card__desc"</span><span class="tok-tag">&gt;</span>Texto<span class="tok-tag">&lt;/p&gt;</span>
+  <span class="tok-tag">&lt;button</span> <span class="tok-attr">class=</span><span class="tok-string">"card__btn"</span><span class="tok-tag">&gt;</span>Ler →<span class="tok-tag">&lt;/button&gt;</span>
+<span class="tok-tag">&lt;/div&gt;</span></pre>
+          </div>
+
+          <!-- Tailwind -->
+          <div class="compare-side">
+            <div class="compare-header">
+              <span class="compare-title">Tailwind CSS</span>
+              <span class="compare-badge badge-new">Moderno ✓</span>
+            </div>
+            <div class="compare-meta">
+              <div class="meta-item">
+                <div class="meta-val meta-good">7</div>
+                <div class="meta-label">Linhas</div>
+              </div>
+              <div class="meta-item">
+                <div class="meta-val meta-good">1</div>
+                <div class="meta-label">Arquivo</div>
+              </div>
+              <div class="meta-item">
+                <div class="meta-val meta-good">~3min</div>
+                <div class="meta-label">Tempo est.</div>
+              </div>
+            </div>
+            <pre class="code-content" style="font-size:0.72rem; padding:1.25rem;">
+<span class="tok-comment">&lt;!-- Apenas HTML · Sem CSS separado --&gt;</span>
+
+<span class="tok-tag">&lt;div</span> <span class="tok-attr">class=</span><span class="tok-string">"bg-white/5 border border-white/10
+  rounded-2xl p-6
+  hover:border-teal-400/40
+  hover:shadow-xl hover:shadow-teal-400/10
+  hover:-translate-y-1
+  transition-all duration-300
+  group"</span><span class="tok-tag">&gt;</span>
+
+  <span class="tok-tag">&lt;h3</span> <span class="tok-attr">class=</span><span class="tok-string">"text-lg font-bold
+    group-hover:text-teal-400
+    transition-colors"</span><span class="tok-tag">&gt;</span>
+    Título
+  <span class="tok-tag">&lt;/h3&gt;</span>
+
+  <span class="tok-tag">&lt;p</span> <span class="tok-attr">class=</span><span class="tok-string">"mt-2 text-sm text-slate-400
+    leading-relaxed"</span><span class="tok-tag">&gt;</span>
+    Texto
+  <span class="tok-tag">&lt;/p&gt;</span>
+
+  <span class="tok-tag">&lt;button</span> <span class="tok-attr">class=</span><span class="tok-string">"mt-4 text-teal-400
+    text-sm font-semibold"</span><span class="tok-tag">&gt;</span>
+    Ler →
+  <span class="tok-tag">&lt;/button&gt;</span>
+
+<span class="tok-tag">&lt;/div&gt;</span></pre>
+          </div>
+        </div>
+
+        <!-- Vantagens -->
+        <div class="reveal" style="margin-top:2rem; display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:1rem;">
+          <div style="background:rgba(45,212,191,0.06); border:1px solid rgba(45,212,191,0.2); border-radius:12px; padding:1.25rem; text-align:center;">
+            <div style="font-size:1.5rem; font-weight:800; color:var(--teal);">75%</div>
+            <div style="font-size:0.8rem; color:var(--text-dim); margin-top:0.25rem;">Menos linhas de código</div>
+          </div>
+          <div style="background:rgba(45,212,191,0.06); border:1px solid rgba(45,212,191,0.2); border-radius:12px; padding:1.25rem; text-align:center;">
+            <div style="font-size:1.5rem; font-weight:800; color:var(--teal);">5×</div>
+            <div style="font-size:0.8rem; color:var(--text-dim); margin-top:0.25rem;">Mais rápido para prototipar</div>
+          </div>
+          <div style="background:rgba(45,212,191,0.06); border:1px solid rgba(45,212,191,0.2); border-radius:12px; padding:1.25rem; text-align:center;">
+            <div style="font-size:1.5rem; font-weight:800; color:var(--teal);">0</div>
+            <div style="font-size:0.8rem; color:var(--text-dim); margin-top:0.25rem;">Conflitos de especificidade</div>
+          </div>
+          <div style="background:rgba(45,212,191,0.06); border:1px solid rgba(45,212,191,0.2); border-radius:12px; padding:1.25rem; text-align:center;">
+            <div style="font-size:1.5rem; font-weight:800; color:var(--teal);">1</div>
+            <div style="font-size:0.8rem; color:var(--text-dim); margin-top:0.25rem;">Arquivo ao invés de dois</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════
+         FEATURES
+    ══════════════════════════════ -->
+    <section id="features">
+      <div class="container-xl">
+        <div class="reveal" style="margin-bottom:3rem;">
+          <div class="section-tag">Por que Tailwind?</div>
+          <h2 class="section-title">O que faz Tailwind <span style="color:var(--teal)">diferente</span></h2>
+          <p class="section-desc">Vantagens concretas que aceleram o desenvolvimento e reduzem a complexidade.</p>
+        </div>
+
+        <div class="feature-grid reveal">
+          <div class="feature-item">
+            <div class="feature-icon">⚡</div>
+            <div class="feature-title">Utility-First</div>
+            <div class="feature-desc">Classes utilitárias compõem qualquer design sem sair do HTML. Sem inventar nomes de classes.</div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">📱</div>
+            <div class="feature-title">Responsivo</div>
+            <div class="feature-desc">Prefixos sm:, md:, lg:, xl: tornam responsividade intuitiva e declarativa.</div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">🌙</div>
+            <div class="feature-title">Dark Mode</div>
+            <div class="feature-desc">dark: prefix nativo. Zero JavaScript necessário para alternar o tema.</div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">🎨</div>
+            <div class="feature-title">Design Tokens</div>
+            <div class="feature-desc">Sistema de cores, espaçamento e tipografia consistente por padrão via tailwind.config.</div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">🔧</div>
+            <div class="feature-title">Customizável</div>
+            <div class="feature-desc">Extensível via tailwind.config.js — adicione cores, fontes e breakpoints customizados.</div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">📦</div>
+            <div class="feature-title">Tree-shaking</div>
+            <div class="feature-desc">Build final inclui apenas as classes usadas. Bundle pequeno em produção.</div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">🔄</div>
+            <div class="feature-title">JIT Engine</div>
+            <div class="feature-desc">Just-in-Time compiler gera classes sob demanda. Valores arbitrários como w-[342px].</div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">🤝</div>
+            <div class="feature-title">Ecossistema</div>
+            <div class="feature-desc">Headless UI, shadcn/ui, Flowbite — um ecossistema rico de componentes prontos.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ─── Footer ─── -->
+  <footer>
+    <div class="container-xl">
+      <div style="display:flex; align-items:center; justify-content:center; gap:0.5rem; margin-bottom:0.5rem;">
+        <div style="width:24px; height:24px; background:linear-gradient(135deg,var(--teal),var(--cyan)); border-radius:5px; display:flex; align-items:center; justify-content:center; font-size:0.75rem;">≈</div>
+        <span style="font-weight:700; color:var(--text-bright);">Tailwind CSS Showcase</span>
+      </div>
+      <p>João Vitor Maciel · Carlos Mielke · Pedro Mendonça</p>
+      <p style="margin-top:0.25rem; font-size:0.75rem; color:#4b5563;">Apresentação Interativa · 2025</p>
+    </div>
+  </footer>
+
+  <script>
+    /* ══════════════════════════════
+       JAVASCRIPT — Modular & Limpo
+    ══════════════════════════════ */
+
+    // ── Navbar scroll effect ──
+    (function initNavbar() {
+      const navbar = document.getElementById('navbar');
+      const hamburger = document.getElementById('hamburger');
+      const navLinks = document.getElementById('nav-links');
+
+      // Add scrolled class on scroll
+      window.addEventListener('scroll', () => {
+        navbar.classList.toggle('scrolled', window.scrollY > 20);
+      });
+
+      // Responsividade: mostrar/esconder hambúrguer
+      function checkBreakpoint() {
+        const isMobile = window.innerWidth < 768;
+        hamburger.style.display = isMobile ? 'flex' : 'none';
+        navLinks.style.display  = isMobile ? 'none'  : 'flex';
+      }
+
+      checkBreakpoint();
+      window.addEventListener('resize', checkBreakpoint);
+    })();
+
+    // ── Toggle menu mobile ──
+    function toggleMenu() {
+      const menu = document.getElementById('mobile-menu');
+      const hamburger = document.getElementById('hamburger');
+      menu.classList.toggle('open');
+      hamburger.classList.toggle('open');
+    }
+
+    // ── Copiar código ──
+    function copyCode(id, btn) {
+      const el = document.getElementById(id);
+      if (!el) return;
+
+      // Extrai texto puro sem tags HTML (strip tags)
+      const text = el.innerText || el.textContent;
+
+      navigator.clipboard.writeText(text).then(() => {
+        // Feedback visual
+        const original = btn.innerHTML;
+        btn.innerHTML = `
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          Copiado!`;
+        btn.classList.add('copied');
+
+        setTimeout(() => {
+          btn.innerHTML = original;
+          btn.classList.remove('copied');
+        }, 2000);
+      }).catch(() => {
+        // Fallback para browsers que bloqueiam clipboard
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        btn.innerHTML = '✓ Copiado!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.innerHTML = 'Copiar';
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    }
+
+    // ── Toggle preview (accordion) ──
+    function togglePreview(id, btn) {
+      const pane = document.getElementById(id);
+      if (!pane) return;
+
+      const isOpen = pane.classList.contains('open');
+
+      if (isOpen) {
+        pane.classList.remove('open');
+        btn.innerHTML = `
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/></svg>
+          Ver Resultado`;
+      } else {
+        pane.classList.add('open');
+        btn.innerHTML = `
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+          Esconder`;
+      }
+    }
+
+    // ── Scroll reveal (IntersectionObserver) ──
+    (function initReveal() {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry, i) => {
+          if (entry.isIntersecting) {
+            // Stagger delay based on element index in parent
+            const siblings = [...entry.target.parentElement.children];
+            const idx = siblings.indexOf(entry.target);
+            entry.target.style.transitionDelay = `${idx * 0.07}s`;
+            entry.target.classList.add('visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+      document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    })();
+  </script>
+</body>
+</html>
